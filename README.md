@@ -1,110 +1,144 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# GPU Broker · Researcher and admin workspaces
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+Next.js App Router interface for researchers to describe workloads, review GPU
+recommendations, and submit requests to the platform team. Uses the existing
+Supabase project and the Flask AI agent. Admins review submitted requests and
+record approval or rejection. No GPU resources are provisioned here.
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+## Run locally
 
-## Features
+Requires Node.js 22.22 or newer.
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Proxy
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
-
-## Demo
-
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
-
-## Deploy to Vercel
-
-Vercel deployment will guide you through creating a Supabase account and project.
-
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
-
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
-
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
-
-## Clone and run locally
-
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
-
-2. Create a Next.js app using the Supabase Starter template npx command
-
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
-
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
-
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
-
-3. Use `cd` to change into the app's directory
-
-   ```bash
-   cd with-supabase-app
-   ```
-
-4. Rename `.env.example` to `.env.local` and update the following:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[INSERT SUPABASE PROJECT API PUBLISHABLE OR ANON KEY]
+```bash
+npm install
+npm run dev
 ```
 
-> [!NOTE]
-> This example uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which refers to Supabase's new **publishable** key format.
-> Both legacy **anon** keys and new **publishable** keys can be used with this variable name during the transition period. Supabase's dashboard may show `NEXT_PUBLIC_SUPABASE_ANON_KEY`; its value can be used in this example.
-> See the [full announcement](https://github.com/orgs/supabase/discussions/29260) for more information.
+Open the printed local URL and sign in with a Supabase account. The existing
+signup, email-confirmation, password-recovery, and password-update flows are
+retained. The Flask service must be running separately.
 
-Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+Configure `.env.local` (never commit this file):
 
-5. You can now run the Next.js local development server:
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+NEXT_PUBLIC_FLASK_URL=http://127.0.0.1:5000
+SUPABASE_SERVICE_ROLE_KEY=your-server-only-service-role-key
+```
 
-   ```bash
-   npm run dev
-   ```
+The current database policies block researcher-session inserts into `requests`,
+so the app uses the service-role key **on the server only**, after independently
+verifying the session. Researcher request reads/updates are restricted to that
+verified user ID; inserts set the owner on the server. Admin reads and decisions
+require an independent database admin-flag check. No service key is sent to the
+browser. Existing database policies and generated types are not changed.
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+If you later allow researcher-session CRUD through RLS and omit the service key,
+set a strong random `GPU_BROKER_SIGNING_SECRET` instead. A server signing key is
+required to verify agent results before saving. When a service key is present it
+also provides that signing key; `GPU_BROKER_SIGNING_SECRET` can override it.
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+## Researcher flow
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+- `/`: owned requests, pagination, draft/submitted filters, and full request-ID lookup.
+- `/requests/new`: chat with the agent and see applicable workload values update.
+- `/requests/[id]`: resume an autosaved draft or inspect a submitted request.
+- `/requests/[id]/review`: inspect memory, GPU, estimated training time, and assumptions.
+- `/help`: explain the describe → review → submit workflow.
 
-## Feedback and issues
+The workload summary labels user inputs, model defaults, workflow defaults, and
+estimated architecture. Inference hides training-only fields and states that
+runtime is not estimated. Allocation duration is intentionally omitted.
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+The browser calls authenticated `POST /api/gpu/chat`, which forwards only
+`message` and the previous `state` to `${NEXT_PUBLIC_FLASK_URL}/api/gpu/chat`.
+This keeps the existing Flask contract and avoids browser CORS configuration.
+The handler uses a 100-second upstream timeout and never automatically resends a
+chat message. Session failures, upstream errors, and invalid responses are shown
+with retry controls.
 
-## More Supabase examples
+## Persistence and status
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+The app uses the existing `requests.chat_history` and `requests.agent_result`
+JSON columns. Chat history contains `{ id, role, content, createdAt }` messages;
+the agent-result column contains the complete latest Flask response, including
+the resumable state. Both are saved together after each successful agent turn.
+The draft ID remains stable during retries. A failed save can be retried without
+calling the agent again. Optimistic `updated_at` checks reject stale writes.
+
+Server-issued result receipts prevent client-modified recommendation snapshots
+from being written through privileged server actions. The receipt is bound to
+the verified user; it is not a Supabase credential and is not stored in the row.
+
+Existing request statuses are used exactly as configured:
+
+| ID  | Database name            | UI meaning                          |
+| --- | ------------------------ | ----------------------------------- |
+| 1   | `draft`                  | Editable, autosaved conversation    |
+| 2   | `researcher_confirmed`   | Submitted, awaiting platform review |
+| 3   | `platform_team_reviewed` | Reviewed                            |
+| 4   | `provisioning_started`   | Provisioning started                |
+| 5   | `approved`               | Approved, provisioning not started  |
+| 6   | `rejected`               | Rejected, read-only                 |
+
+**Confirm & submit** conditionally moves an owned, ready draft from 1 to 2.
+Repeated confirmation is idempotent. All non-draft states are read-only in the
+researcher interface. Admin review records approved (5) or rejected (6) decisions. This application
+never advances requests to provisioning (4), and reviewed (3) remains distinct
+from approved.
+
+## Verification
+
+```bash
+npm test
+npx tsc --noEmit
+npm run build
+npm start
+```
+
+The Node tests cover agent-response validation, inference field visibility,
+message parsing, JSONB-safe retry comparison, formatting, and status semantics.
+Authenticated HTTP integration checks were also run against a temporary test
+account and local mock agent: draft saving/resume, stale writes, ownership,
+tamper rejection, confirmation, submitted locking, and upstream failures.
+The temporary test account and request records are removed after verification.
+
+Next.js retains Cache Components and Partial Prefetching. Session-dependent
+content is under Suspense and is not shared through server-side user-data caches.
+
+## Admin workspace
+
+Admins sign in through the same login page and are directed to `/admin`.
+Create their Supabase Auth account first, then manually insert a `public.users`
+row with `user_id` equal to that account's Auth UUID and `is_admin = true`.
+Email is optional. Researchers do not need rows in `public.users`; signup is
+unchanged and no profiles, migrations, or triggers are created by this app.
+
+`/admin` lists submitted requests with pending/all/approved/rejected filters,
+20-row pagination, and full request-ID lookup. `/admin/requests/[id]` shows the
+complete saved conversation, workload values and provenance, recommendation,
+agent explanation, and estimation assumptions. Researchers without profile
+emails are identified by their user ID. Drafts are excluded from admin access.
+
+Each admin page and action verifies the session and reads the current database
+flag; missing profiles, false flags, and lookup failures never grant access.
+The service-role key remains server-only. Ensure Supabase's database policies
+also prevent ordinary clients from changing `users.is_admin` or another user's
+requests. This application provides no profile/admin-management write endpoint.
+
+Approve and Reject apply only to states 2 and 3 and set state 5 or 6. Conditional
+status/timestamp updates prevent stale reviews from overwriting decisions.
+Identical retries are idempotent; conflicting decisions require refresh.
+Decided and provisioning requests cannot be changed by this interface.
+Admins can use the header Workspace link for their own researcher requests.
+No provisioning or agent calls occur during admin review.
+
+To repeat the admin HTTP suite, run `npm run build`, start the production server
+with `npm start -- --hostname 127.0.0.1 --port 3100`, then run
+`node --experimental-strip-types tests/admin.integration.mjs` in another terminal.
+It uses `.env.local` to create disposable test accounts and requests and removes
+those fixtures in a `finally` block. It checks authorization, manually assigned
+roles, database self-promotion protection, review decisions, conflicting writes,
+request details, pagination, researcher ownership, and role revocation.
+`GPU_UI_TEST_URL` can override the local test-server URL.

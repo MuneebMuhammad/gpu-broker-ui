@@ -4,6 +4,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "spb-gen": "supabase gen types typescript --project-id 'bwwhjegyucolhxiijxnf' --schema public > lib/supabase/generatedTypes.ts && prettier --write \"lib/supabase/generatedTypes.ts\"",
     "lint": "eslint ."
   },
